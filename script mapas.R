@@ -27,7 +27,7 @@ sessionInfo()
 
 ##############
 #Directorio de trabajo
-setwd ("~/Documents/Data Science/Repos/rojoneon/2020B/ensanut_mun")
+setwd("~/Documents/GitHub/ensanut_mun")
 ##############
 
 ##############
