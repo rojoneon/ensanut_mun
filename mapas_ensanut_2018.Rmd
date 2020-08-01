@@ -1,71 +1,106 @@
-######################################################################
-#Mapas de diabetes, hipertensión y obesidad con datos de INEGI-ENSANUT a nivel municipal (estim. áreas peq.)
-#Elaborado por: Máximo Ernesto Jaramillo-Molina 
-#               Twitter: @rojo_neon
-#               Github: @rojoneon
+---
+title: "Mapas ENSANUT 2018"
+author:
+- Máximo Ernesto Jaramillo Molina  ^[El Colegio de México, diego.lopez@colmex.mx]
+- Diego López Tamayo ^[El Colegio de México, diego.lopez@colmex.mx]
+output:
+  html_document:
+    df_print: paged
+    highlight: tango
+    theme: simplex
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+header:
+- \usepackage{amsmath}
+- \usepackage[spanish]{babel}
+- \selectlanguage{spanish}
+urlcolor: blue
+---
 
-#Descarga de datos INEGI: https://www.inegi.org.mx/investigacion/pohd/2018/default.html#Tabulados
-######################################################################
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
 
-##############
-#Configuración
+# Directorio y librería
+
+```{r}
+#Directorio de trabajo
+setwd("~/Documents/GitHub/ensanut_mun")
+```
+
+```{r}
+# Configuración
 rm(list = ls())
-library(pacman)
-# Abrimos las paqueterías con un sólo comando:
-p_load(haven, readr, readxl, ggplot2, shiny, tidyverse, knitr,gmodels,foreign,expss,fishualize)
-
-##############
+# Paqueterías
+pacman::p_load(tidyverse,
+               ggplot2,
+               shiny,
+               gmodels,
+               tmap,
+               leaflet,
+               foreign,
+               expss,
+               fishualize,
+               viridis,
+               raster,
+               cowplot)
 #Paqueterías para mapear
 library(sf)
 #install.packages("ggspatial")
 library("ggspatial")
 theme_set(theme_bw())
 library("colorspace")
-#hcl_palettes(plot = TRUE)
-p_load(rstudioapi, lintr, raster, viridis, cowplot, rmarkdown)
-sessionInfo()
+# hcl_palettes(plot = TRUE)
+# sessionInfo()
+```
 
-##############
-#Directorio de trabajo
-setwd("~/Documents/GitHub/ensanut_mun")
-##############
+# Shapes
 
-##############
-#Pegado de datos de presidencias municipales
-##############
+```{r}
 #Shape Nacional
 nac <- st_read("nacional.shp")
-
+```
+```{r}
 #Shape Municipal
 mun_nac <- st_read("municipal.shp")
 
 mun_nac <- mun_nac %>%
   dplyr::select(CVEGEO,NOM_ENT,NOM_MUN)
 glimpse(mun_nac)
-head(mun_nac)
+```
 
-#Datos de ensanut a nivel municipal
+# Datos de ensanut a nivel municipal
+
+```{r}
 ensanut_ap <- read.csv(file = "ensanut_areas_peq.csv", 
                        sep=",", 
                        colClasses=c(rep('factor', 6), 'numeric','numeric','numeric')
                        )
-glimpse(ensanut_ap)
-
 ensanut_ap <- ensanut_ap %>%
   rename(CVEGEO = mun)
+glimpse(ensanut_ap)
+```
 
+```{r}
 #Unir ambas bases
-datitos<-merge(x=mun_nac,      y=ensanut_ap,by=c("CVEGEO"))
+datitos<-merge(x=mun_nac,y=ensanut_ap,by=c("CVEGEO"))
+glimpse(datitos)
+```
 
+```{r}
+# Exportamos la base con datos georeferenciados a nivel municipal
 # write.csv(datitos, file = "datitos.csv")
+```
 
+# Mapas
 
+Definimos una función para crear nuestros mapas con theme_map(...) Los tres puntos indican una [cantidad variable de argumentos](https://www.burns-stat.com/the-three-dots-construct-in-r/#:~:text=There%20is%20a%20mechanism%20that,%2Ddot%20or%20three%2Ddots.)
 
-##########################
-####Mapas
-##########################
-
-
+```{r}
 #Función para determinar theme de las gráficas
 theme_map <- function(...) {
   theme_minimal() +
@@ -114,12 +149,19 @@ theme_map <- function(...) {
       ...
     )
 }
+```
+
+## Mapas con cuantiles de diabates
 
 
-#####################
-##Mapas con cuantiles de diabates
-#####################
+Para extraer los cuantiles usamos las funciones:
+- [pull()](https://dplyr.tidyverse.org/reference/pull.html) Parecido a select(), [pero no igual](https://stackoverflow.com/questions/49844902/difference-between-pull-and-select-in-dplyr)
+- [quantile()](https://statisticsglobe.com/quantile-function-in-r-example)
 
+Para crear las etiquetas utilizamos:
+- [imap_chr()](https://purrr.tidyverse.org/reference/index.html) También vea [aquí](http://zevross.com/blog/2019/06/11/the-power-of-three-purrr-poseful-iteration-in-r-with-map-pmap-and-imap/)
+
+```{r}
 # ¿Cuántas clases quiero?
 no_classes <- 5
 # Extraer cuantiles
@@ -135,21 +177,39 @@ labels <- imap_chr(cuantil, function(., idx){
                 round(cuantil[idx + 1] , 0),
                 "%"))
 })
+cuantil
+labels
+```
 
+```{r}
 # Se elimina la última etiqueta
 # En caso contrario sería hasta NA
 labels <- labels[1:length(labels) - 1]
 labels
-# Crear la variable
+```
+
+Creamos la variable para cuantiles de diabetes en la base de datos con la función [cut()](https://www.rdocumentation.org/packages/base/versions/3.6.2/topics/cut) [ver tamibén](https://www.r-bloggers.com/r-function-of-the-day-cut-2/)
+
+```{r}
+# Crear la variable en datitos
 datitos <- datitos %>%
   mutate(q_diabetes = cut(diabetes,
                          breaks = cuantil,
                          labels = labels,
                          include.lowest = T))
+# q_var = datitos %>%
+#                pull(variable)
 
+# datitos <- datitos %>%
+#  mutate(q_diabetes = cut(q_var,
+#                         breaks = cuantil,
+#                         labels = labels,
+#                         include.lowest = T))
+```
 
-##Va el mapa de diabetes
-#####################
+### Mapa 1
+
+```{r}
 ggplot(data = datitos) +
   # Agrego la capa principal
   geom_sf(
@@ -195,12 +255,15 @@ ggplot(data = datitos) +
   theme_map()
 
 #Guardar el mapa
-ggsave("Diabetes_Nac.png", width = 7)
+# ggsave("Diabetes_Nac.png", width = 7)
+```
 
-#####################
-## Mapas con cuantiles de hipertension
-#####################
 
+## Mapas con cuantiles de hipertensión
+
+Básicamente es el mismo [proceso que para diabetes](#mapas-con-cuantiles-de-diabates)
+
+```{r}
 # ¿Cuántas clases quiero?
 no_classes <- 5
 # Extraer cuantiles
@@ -220,18 +283,23 @@ labels <- imap_chr(cuantil, function(., idx){
 # Se elimina la última etiqueta
 # En caso contrario sería hasta NA
 labels <- labels[1:length(labels) - 1]
+cuantil
 labels
-# Crear la variable
+```
+
+
+```{r}
+# Crear la variable en la base de datos
 datitos <- datitos %>%
   mutate(q_hipertension = cut(hipertension,
                           breaks = cuantil,
                           labels = labels,
                           include.lowest = T))
+```
 
+### Mapa 2
 
-
-##Va el mapa de hipertension
-#####################
+```{r}
 ggplot(data = datitos) +
   # Agrego la capa principal
   geom_sf(
@@ -276,18 +344,14 @@ ggplot(data = datitos) +
   # Finalmente, agregar theme
   theme_map()
 
-#Guardar el mapa
-ggsave("Hipertension_Nac.png", width = 7)
+# Guardar el mapa
+# ggsave("Hipertension_Nac.png", width = 7)
 
+```
 
+## Mapas con cuantiles de obesidad
 
-
-
-
-#####################
-##Mapas con cuantiles de obesidad
-#####################
-
+```{r}
 # ¿Cuántas clases quiero?
 no_classes <- 5
 # Extraer cuantiles
@@ -307,7 +371,12 @@ labels <- imap_chr(cuantil, function(., idx){
 # Se elimina la última etiqueta
 # En caso contrario sería hasta NA
 labels <- labels[1:length(labels) - 1]
+cuantil
 labels
+```
+
+
+```{r}
 # Crear la variable
 datitos <- datitos %>%
   mutate(q_obesidad = cut(obesidad,
@@ -315,10 +384,11 @@ datitos <- datitos %>%
                               labels = labels,
                               include.lowest = T))
 
+```
 
+### Mapa 3
 
-##Va el mapa de obesidad
-#####################
+```{r}
 ggplot(data = datitos) +
   # Agrego la capa principal
   geom_sf(
@@ -364,5 +434,8 @@ ggplot(data = datitos) +
   theme_map()
 
 #Guardar el mapa
-ggsave("Obesidad_Nac.png", width = 7)
+# ggsave("Obesidad_Nac.png", width = 7)
+```
+
+
 
