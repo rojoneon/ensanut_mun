@@ -27,7 +27,7 @@ sessionInfo()
 
 ##############
 #Directorio de trabajo
-setwd("~/Documents/GitHub/ensanut_mun")
+setwd ("~/Documents/Data Science/Repos/rojoneon/2020B/ensanut_mun")
 ##############
 
 ##############
@@ -48,7 +48,7 @@ head(mun_nac)
 ensanut_ap <- read.csv(file = "ensanut_areas_peq.csv", 
                        sep=",", 
                        colClasses=c(rep('factor', 6), 'numeric','numeric','numeric')
-                       )
+)
 glimpse(ensanut_ap)
 
 ensanut_ap <- ensanut_ap %>%
@@ -57,7 +57,7 @@ ensanut_ap <- ensanut_ap %>%
 #Unir ambas bases
 datitos<-merge(x=mun_nac,      y=ensanut_ap,by=c("CVEGEO"))
 
-# write.csv(datitos, file = "datitos.csv")
+#write.csv(datitos, file = "datitos.csv")
 
 
 
@@ -143,9 +143,10 @@ labels
 # Crear la variable
 datitos <- datitos %>%
   mutate(q_diabetes = cut(diabetes,
-                         breaks = cuantil,
-                         labels = labels,
-                         include.lowest = T))
+                          breaks = cuantil,
+                          labels = labels,
+                          include.lowest = T))
+
 
 
 ##Va el mapa de diabetes
@@ -159,7 +160,7 @@ ggplot(data = datitos) +
     color = "white",
     size = 0
   ) +
-
+  
   # Viridis color scale
   scale_fill_viridis(
     option = "plasma",
@@ -174,14 +175,14 @@ ggplot(data = datitos) +
       title.position = "top",
       reverse = T # El valor más alto hasta arriba
     )) +
-
+  
   # # Utilizar un borde más grueso para los municipios
   # geom_sf(
   #   data = datitos,
   #   fill = "transparent",
   #   color = "white",
   #   size = 0.5) +
-
+  
   # Agregar títulos
   labs(x = NULL,
        y = NULL,
@@ -197,8 +198,16 @@ ggplot(data = datitos) +
 #Guardar el mapa
 ggsave("Diabetes_Nac.png", width = 7)
 
+
+
+
+
+
+
+
+
 #####################
-## Mapas con cuantiles de hipertension
+##Mapas con cuantiles de hipertension
 #####################
 
 # ¿Cuántas clases quiero?
@@ -224,9 +233,9 @@ labels
 # Crear la variable
 datitos <- datitos %>%
   mutate(q_hipertension = cut(hipertension,
-                          breaks = cuantil,
-                          labels = labels,
-                          include.lowest = T))
+                              breaks = cuantil,
+                              labels = labels,
+                              include.lowest = T))
 
 
 
@@ -311,9 +320,9 @@ labels
 # Crear la variable
 datitos <- datitos %>%
   mutate(q_obesidad = cut(obesidad,
-                              breaks = cuantil,
-                              labels = labels,
-                              include.lowest = T))
+                          breaks = cuantil,
+                          labels = labels,
+                          include.lowest = T))
 
 
 
@@ -365,4 +374,3 @@ ggplot(data = datitos) +
 
 #Guardar el mapa
 ggsave("Obesidad_Nac.png", width = 7)
-

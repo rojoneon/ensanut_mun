@@ -1,7 +1,7 @@
 ---
-title: "Mapas ENSANUT 2018"
+title: "Mapas Encuesta Nacional de Salud y Nutrición 2018"
 author:
-- Máximo Ernesto Jaramillo Molina  ^[El Colegio de México, diego.lopez@colmex.mx]
+- Máximo Ernesto Jaramillo Molina  ^[El Colegio de México, mjaramillo@colmex.mx]
 - Diego López Tamayo ^[El Colegio de México, diego.lopez@colmex.mx]
 output:
   html_document:
@@ -24,6 +24,19 @@ urlcolor: blue
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+
+# Información
+
+Fuente: Elaborado por @rojo_neon, con datos de INEGI/ENSANUT a nivel muncipal.  
+
+Para reproducir, visite [github.com/rojoneon/ensanut_mun](https://github.com/rojoneon/ensanut_mun)  
+
+Para una versión interactiva introduzca en su consola de R el siguiente código (requiere libería Shiny):  
+```{r}
+#  library(shiny)
+#  shiny::runGitHub('diego-eco/shiny_ensanut2018_rojoneon')
+```
+
 
 # Directorio y librería
 
